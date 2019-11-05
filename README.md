@@ -102,6 +102,9 @@ By default, the Log Share endpoint provides logs with Unix nanosecond timestamps
 #### Distribution of Edge (client-facing) Response Status Codes
 
 ```
+$ logshare-cli --api-token=<snip> --zone-name=example.com --start-time=1453307871 --count=20000 | jq '.[] | .EdgeResponseStatus empty' | sort -rn | uniq -c | sort -rn
+```
+```
 $ logshare-cli --api-key=<snip> --api-email=<snip> --zone-name=example.com --start-time=1453307871 --count=20000 | jq '.[] | .EdgeResponseStatus empty' | sort -rn | uniq -c | sort -rn
 ```
 
@@ -123,6 +126,9 @@ $ logshare-cli --api-key=<snip> --api-email=<snip> --zone-name=example.com --sta
 
 #### List Available Log Fields
 
+```
+$ logshare-cli --api-token=<snip> --zone-name=example.com --list-fields | jq
+```
 ```
 $ logshare-cli --api-key=<snip> --api-email=<snip> --zone-name=example.com --list-fields | jq
 ```
