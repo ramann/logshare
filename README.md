@@ -24,7 +24,7 @@ With a [correctly installed Go environment](https://golang.org/doc/install):
 
 ```sh
 # Install it onto your $GOPATH:
-$ go get github.com/cloudflare/logshare/...
+$ go get github.com/ramann/logshare/...
 # Run the CLI:
 $ logshare-cli <options>
 ```
@@ -61,6 +61,7 @@ COMMANDS:
      help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
+   --api-token value              Your Cloudflare API token
    --api-key value                Your Cloudflare API key
    --api-email value              The email address associated with your Cloudflare API key and account
    --zone-id value                The zone ID of the zone you are requesting logs for

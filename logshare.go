@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/pkg/errors"
 )
 
@@ -31,6 +30,7 @@ const (
 // should not be modified concurrently.
 type Client struct {
 	endpoint        string
+	apiToken	string
 	apiKey          string
 	apiEmail        string
 	byReceived      bool
@@ -72,13 +72,9 @@ type Meta struct {
 // New creates a new client instance for consuming logs from
 // Cloudflare's Enterprise Log Share API. A client should not be modified during
 // HTTP requests.
-func New(apiKey string, apiEmail string, options *Options) (*Client, error) {
-	if apiKey == "" {
-		return nil, errors.New("apiKey cannot be empty")
-	}
-
-	if apiEmail == "" {
-		return nil, errors.New("apiEmail cannot be empty")
+func New(apiToken string, apiKey string, apiEmail string, options *Options) (*Client, error) {
+	if apiToken == "" && (apiKey == "" || apiEmail == "") {
+		return nil, errors.New("apiToken cannot be empty")
 	}
 
 	// Default to the received endpoint.
@@ -88,6 +84,7 @@ func New(apiKey string, apiEmail string, options *Options) (*Client, error) {
 	}
 
 	client := &Client{
+		apiToken:   apiToken,
 		apiKey:     apiKey,
 		apiEmail:   apiEmail,
 		endpoint:   apiURL,
@@ -191,8 +188,12 @@ func (c *Client) request(u *url.URL) (*Meta, error) {
 
 	// Apply any user-defined headers in a thread-safe manner.
 	req.Header = cloneHeader(c.headers)
-	req.Header.Set("X-Auth-Key", c.apiKey)
-	req.Header.Set("X-Auth-Email", c.apiEmail)
+	if (c.apiToken != "") {
+		req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	} else {
+		req.Header.Set("X-Auth-Key", c.apiKey)
+		req.Header.Set("X-Auth-Email", c.apiEmail)
+	}
 	req.Header.Set("Accept", "application/json")
 
 	start := makeTimestamp()

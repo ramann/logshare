@@ -13,8 +13,9 @@ import (
 
 const apiURL = "https://api.cloudflare.com/client/v4"
 const (
+	AuthApiToken = 1 << iota
 	// AuthKeyEmail specifies that we should authenticate with API key and email address
-	AuthKeyEmail = 1 << iota
+	AuthKeyEmail // = 1 << iota
 	// AuthUserService specifies that we should authenticate with a User-Service key
 	AuthUserService
 )
@@ -22,6 +23,7 @@ const (
 // API holds the configuration for the current API client. A client should not
 // be modified concurrently.
 type API struct {
+	APIToken	  string
 	APIKey            string
 	APIEmail          string
 	APIUserServiceKey string
@@ -33,12 +35,13 @@ type API struct {
 }
 
 // New creates a new Cloudflare v4 API client.
-func New(key, email string, opts ...Option) (*API, error) {
-	if key == "" || email == "" {
+func New(token, key, email string, opts ...Option) (*API, error) {
+	if token == "" && ( key == "" || email == "") {
 		return nil, errors.New(errEmptyCredentials)
 	}
 
 	api := &API{
+		APIToken: token,
 		APIKey:   key,
 		APIEmail: email,
 		BaseURL:  apiURL,
@@ -60,7 +63,7 @@ func New(key, email string, opts ...Option) (*API, error) {
 	return api, nil
 }
 
-// SetAuthType sets the authentication method (AuthyKeyEmail or AuthUserService).
+// SetAuthType sets the authentication method (AuthyKeyEmail or AuthUserService or AuthApiToken).
 func (api *API) SetAuthType(authType int) {
 	api.authType = authType
 }
@@ -141,6 +144,9 @@ func (api *API) request(method, uri string, reqBody io.Reader, authType int) (*h
 
 	// Apply any user-defined headers first.
 	req.Header = cloneHeader(api.headers)
+	if authType&AuthApiToken != 0 {
+		req.Header.Set("Authorization", "Bearer "+api.APIToken)
+	}
 	if authType&AuthKeyEmail != 0 {
 		req.Header.Set("X-Auth-Key", api.APIKey)
 		req.Header.Set("X-Auth-Email", api.APIEmail)

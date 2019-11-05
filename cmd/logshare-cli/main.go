@@ -10,7 +10,7 @@ import (
 
 	gcs "cloud.google.com/go/storage"
 	cloudflare "github.com/cloudflare/cloudflare-go"
-	"github.com/cloudflare/logshare"
+	"github.com/ramann/logshare"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
@@ -70,7 +70,7 @@ func run(conf *config) func(c *cli.Context) error {
 
 		// Populate the zoneID if it wasn't supplied.
 		if conf.zoneID == "" {
-			cf, err := cloudflare.New(conf.apiKey, conf.apiEmail)
+			cf, err := cloudflare.New(conf.apiToken, conf.apiKey, conf.apiEmail)
 			id, err := cf.ZoneIDByName(conf.zoneName)
 			if err != nil {
 				cli.ShowAppHelp(c)
@@ -93,6 +93,7 @@ func run(conf *config) func(c *cli.Context) error {
 		}
 
 		client, err := logshare.New(
+			conf.apiToken,
 			conf.apiKey,
 			conf.apiEmail,
 			&logshare.Options{
@@ -132,6 +133,7 @@ func run(conf *config) func(c *cli.Context) error {
 }
 
 func parseFlags(conf *config, c *cli.Context) error {
+	conf.apiToken = c.String("api-token")
 	conf.apiKey = c.String("api-key")
 	conf.apiEmail = c.String("api-email")
 	conf.zoneID = c.String("zone-id")
@@ -151,6 +153,7 @@ func parseFlags(conf *config, c *cli.Context) error {
 }
 
 type config struct {
+	apiToken            string
 	apiKey              string
 	apiEmail            string
 	zoneID              string
@@ -169,8 +172,8 @@ type config struct {
 
 func (conf *config) Validate() error {
 
-	if conf.apiKey == "" || conf.apiEmail == "" {
-		return errors.New("Must provide both api-key and api-email")
+	if conf.apiToken == "" && (conf.apiKey == "" || conf.apiEmail == "") {
+		return errors.New("Must provide api-token, or both api-key and api-email")
 	}
 
 	if conf.zoneID == "" && conf.zoneName == "" {
@@ -189,6 +192,10 @@ func (conf *config) Validate() error {
 }
 
 var flags = []cli.Flag{
+	cli.StringFlag{
+		Name: "api-token",
+		Usage: "Your Cloudflare API token",
+	},
 	cli.StringFlag{
 		Name:  "api-key",
 		Usage: "Your Cloudflare API key",
